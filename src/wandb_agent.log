@@ -1,0 +1,65 @@
+nohup: ignoring input
+wandb: Starting wandb agent 🕵️
+2025-03-25 23:51:32,615 - wandb.wandb_agent - INFO - Running runs: []
+2025-03-25 23:51:32,761 - wandb.wandb_agent - INFO - Agent received command: run
+2025-03-25 23:51:32,761 - wandb.wandb_agent - INFO - Agent starting run with config:
+	data_source: CIFAR10
+	dataset: extreme
+	model: SimSiam
+	model_class: vit
+	model_type: advanced
+	n_train: 1000
+	optim: AdamW
+	temperature: 0.5
+2025-03-25 23:51:32,765 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python train_ssl.py --use_wandb --model --dataset --epochs 3 --model_type --model_class --data_source --n_train --optim --temperature
+usage: train_ssl.py [-h] --model {SimCLR,SimSiam,BYOL} --dataset
+                    {uniform,moderate,heavy,extreme} [--epochs EPOCHS]
+                    [--use_wandb] [--temperature TEMPERATURE] --model_type
+                    {basic,advanced} --model_class {cnn,vit}
+                    [--data_source {MNIST,CIFAR10,FashionMNIST}]
+                    [--n_train N_TRAIN] [--optim {Adam,AdamW}]
+train_ssl.py: error: argument --model: expected one argument
+2025-03-25 23:51:37,779 - wandb.wandb_agent - INFO - Running runs: ['udueflcw']
+2025-03-25 23:51:37,780 - wandb.wandb_agent - INFO - Cleaning up finished run: udueflcw
+2025-03-25 23:51:38,094 - wandb.wandb_agent - INFO - Agent received command: run
+2025-03-25 23:51:38,094 - wandb.wandb_agent - INFO - Agent starting run with config:
+	data_source: MNIST
+	dataset: extreme
+	model: SimSiam
+	model_class: vit
+	model_type: basic
+	n_train: 4000
+	optim: AdamW
+	temperature: 0.9
+2025-03-25 23:51:38,097 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python train_ssl.py --use_wandb --model --dataset --epochs 3 --model_type --model_class --data_source --n_train --optim --temperature
+usage: train_ssl.py [-h] --model {SimCLR,SimSiam,BYOL} --dataset
+                    {uniform,moderate,heavy,extreme} [--epochs EPOCHS]
+                    [--use_wandb] [--temperature TEMPERATURE] --model_type
+                    {basic,advanced} --model_class {cnn,vit}
+                    [--data_source {MNIST,CIFAR10,FashionMNIST}]
+                    [--n_train N_TRAIN] [--optim {Adam,AdamW}]
+train_ssl.py: error: argument --model: expected one argument
+2025-03-25 23:51:43,109 - wandb.wandb_agent - INFO - Running runs: ['de35ebyy']
+2025-03-25 23:51:43,110 - wandb.wandb_agent - INFO - Cleaning up finished run: de35ebyy
+2025-03-25 23:51:43,683 - wandb.wandb_agent - INFO - Agent received command: run
+2025-03-25 23:51:43,683 - wandb.wandb_agent - INFO - Agent starting run with config:
+	data_source: MNIST
+	dataset: extreme
+	model: SimCLR
+	model_class: vit
+	model_type: basic
+	n_train: 4000
+	optim: AdamW
+	temperature: 0.2
+2025-03-25 23:51:43,685 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python train_ssl.py --use_wandb --model --dataset --epochs 3 --model_type --model_class --data_source --n_train --optim --temperature
+usage: train_ssl.py [-h] --model {SimCLR,SimSiam,BYOL} --dataset
+                    {uniform,moderate,heavy,extreme} [--epochs EPOCHS]
+                    [--use_wandb] [--temperature TEMPERATURE] --model_type
+                    {basic,advanced} --model_class {cnn,vit}
+                    [--data_source {MNIST,CIFAR10,FashionMNIST}]
+                    [--n_train N_TRAIN] [--optim {Adam,AdamW}]
+train_ssl.py: error: argument --model: expected one argument
+2025-03-25 23:51:48,697 - wandb.wandb_agent - INFO - Running runs: ['myitp583']
+2025-03-25 23:51:48,698 - wandb.wandb_agent - ERROR - Detected 3 failed runs in the first 60 seconds, shutting down.
+2025-03-25 23:51:48,698 - wandb.wandb_agent - INFO - To disable this check set WANDB_AGENT_DISABLE_FLAPPING=true
+wandb: Terminating and syncing runs. Press ctrl-c to kill.

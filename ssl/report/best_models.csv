@@ -1,0 +1,10 @@
+dataset,model,checkpoint,train_loss,val_loss,epoch,batch_size,temperature,learning_rate,gen_gap
+uniform,SimCLR,/eagle/projects/argonne_tpc/siebenschuh/domain_shift_data/checkpoints/SimCLR/uniform/u4uhrhu8_encoder_epoch15.pth,3.0936315517340387,3.0687085723876955,15,64,0.95,0.0006648682606295527,-0.024922979346343244
+moderate,SimCLR,/eagle/projects/argonne_tpc/siebenschuh/domain_shift_data/checkpoints/SimCLR/moderate/g4z3a6hh_encoder_epoch15.pth,3.0859823184353963,3.0698025321960447,15,64,0.4,0.0012938237078330048,-0.016179786239351568
+heavy,SimCLR,/eagle/projects/argonne_tpc/siebenschuh/domain_shift_data/checkpoints/SimCLR/heavy/0phsbb1q_encoder_epoch15.pth,3.092981360320534,3.085280046463013,15,64,0.7000000000000001,0.00029926557645341154,-0.0077013138575208195
+uniform,SimSiam,/eagle/projects/argonne_tpc/siebenschuh/domain_shift_data/checkpoints/SimSiam/uniform/883y4gzf_encoder_epoch15.pth,0.8906129215444837,0.8922836184501648,15,512,0.2,8.626025039546527e-05,0.0016706969056811127
+moderate,SimSiam,/eagle/projects/argonne_tpc/siebenschuh/domain_shift_data/checkpoints/SimSiam/moderate/awq4bb61_encoder_epoch15.pth,0.7893927177148206,0.7877565668179438,15,128,0.8500000000000001,8.32803732979039e-05,-0.0016361508968767424
+heavy,SimSiam,/eagle/projects/argonne_tpc/siebenschuh/domain_shift_data/checkpoints/SimSiam/heavy/a8dzsucc_encoder_epoch15.pth,0.753259210714272,0.7522172606908358,15,128,0.2,0.008330349108588821,-0.0010419500234362111
+uniform,BYOL,/eagle/projects/argonne_tpc/siebenschuh/domain_shift_data/checkpoints/BYOL/uniform/vq3bpduc_encoder_epoch15.pth,1.573917648621968,1.579649239778519,15,512,0.7000000000000001,2.7861089801682444e-05,0.005731591156550975
+moderate,BYOL,/eagle/projects/argonne_tpc/siebenschuh/domain_shift_data/checkpoints/BYOL/moderate/7wnlxuy5_encoder_epoch15.pth,1.8147043761398112,1.8164262247085572,15,64,0.4,0.00011868541572499668,0.0017218485687460205
+heavy,BYOL,/eagle/projects/argonne_tpc/siebenschuh/domain_shift_data/checkpoints/BYOL/heavy/t3yibp12_encoder_epoch15.pth,1.3696629703044891,1.3728596312659127,15,256,0.7000000000000001,9.299916104773108e-05,0.0031966609614235697

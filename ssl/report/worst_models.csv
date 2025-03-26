@@ -1,0 +1,10 @@
+dataset,model,checkpoint,train_loss,val_loss,epoch,batch_size,temperature,learning_rate,gen_gap
+uniform,SimCLR,/eagle/projects/argonne_tpc/siebenschuh/domain_shift_data/checkpoints/SimCLR/uniform/v3jlmh5f_encoder_epoch15.pth,5.137537581580026,4.575376391410828,15,512,0.15000000000000002,0.0009427592927996576,-0.5621611901691983
+moderate,SimCLR,/eagle/projects/argonne_tpc/siebenschuh/domain_shift_data/checkpoints/SimCLR/moderate/v79ockga_encoder_epoch15.pth,5.155429329190936,4.590017735958099,15,512,0.75,0.00042784904092575904,-0.5654115932328363
+heavy,SimCLR,/eagle/projects/argonne_tpc/siebenschuh/domain_shift_data/checkpoints/SimCLR/heavy/pm0smoi5_encoder_epoch15.pth,5.17178077357156,4.594919979572296,15,512,0.30000000000000004,0.00025963142802577245,-0.5768607939992636
+uniform,SimSiam,/eagle/projects/argonne_tpc/siebenschuh/domain_shift_data/checkpoints/SimSiam/uniform/hkw9d5aw_encoder_epoch15.pth,1.4991951659321785,1.6226183032989503,15,64,0.9,0.0029832333864596916,0.1234231373667718
+moderate,SimSiam,/eagle/projects/argonne_tpc/siebenschuh/domain_shift_data/checkpoints/SimSiam/moderate/fqylvwae_encoder_epoch15.pth,1.5059850684234075,1.506113392966134,15,256,0.35000000000000003,0.008609861665788717,0.00012832454272637683
+heavy,SimSiam,/eagle/projects/argonne_tpc/siebenschuh/domain_shift_data/checkpoints/SimSiam/heavy/a7sx0ph1_encoder_epoch15.pth,1.4601643894399916,1.4645157371248518,15,256,0.7000000000000001,6.407682108608916e-05,0.0043513476848602295
+uniform,BYOL,/eagle/projects/argonne_tpc/siebenschuh/domain_shift_data/checkpoints/BYOL/uniform/iitfix4c_encoder_epoch15.pth,3.3317654303142,3.3353777527809143,15,512,0.25,0.004049969312292572,0.0036123224667141685
+moderate,BYOL,/eagle/projects/argonne_tpc/siebenschuh/domain_shift_data/checkpoints/BYOL/moderate/zybnivsu_encoder_epoch15.pth,2.952501205461366,2.952258586883545,15,128,0.15000000000000002,0.005325665500966776,-0.00024261857782104101
+heavy,BYOL,/eagle/projects/argonne_tpc/siebenschuh/domain_shift_data/checkpoints/BYOL/heavy/3b0dp5gc_encoder_epoch15.pth,3.1704833933285306,3.1699536187308177,15,256,0.8500000000000001,0.00712756383830943,-0.0005297745977128621
