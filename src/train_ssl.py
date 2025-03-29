@@ -373,7 +373,8 @@ def main():
         torch.save(encoder.state_dict(), ckpt_path)
         if True:
             wandb.log({'checkpoint': ckpt_path})
-            wandb.save(ckpt_path)
+            if epoch==args.epochs:
+                wandb.save(ckpt_path)
 
     # finish
     if True:
