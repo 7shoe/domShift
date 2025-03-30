@@ -4,8 +4,8 @@ inference_ssl.py
 
 This script iterates over all model checkpoints found under a given checkpoint directory,
 infers the correct model and dataset parameters from the directory structure and filename,
-computes embeddings on the corresponding dataset’s validation split (using the YAML subsampling),
-and saves the embeddings and labels as numpy arrays in the designated embeddings folder.
+computes embeddings on the official test subset for MNIST/CIFAR10/CIFAR100 (as appropriate),
+and saves the embeddings and groundtruth labels as numpy arrays in the designated embeddings folder.
 
 Usage:
     python inference_ssl.py [--ckpt_root PATH] -i {0,1,2,3}
@@ -21,8 +21,8 @@ import torchvision
 import torchvision.transforms as T
 import numpy as np
 import argparse
-from torch.utils.data import Subset, DataLoader
-from tqdm import tqdm  # progress bar
+from torch.utils.data import DataLoader, Subset
+from tqdm import tqdm
 
 # Global paths for datasets and where to store embeddings.
 DATA_ROOT = '/eagle/projects/argonne_tpc/siebenschuh/domain_shift_data/datasets'
@@ -37,7 +37,7 @@ class SimpleEncoder(torch.nn.Module):
         Args:
             model_type (str): 'basic' or 'advanced'
             embedding_dim (int): Output embedding dimension.
-            input_shape (tuple): (channels, height, width)
+            input_shape (tuple): (channels, height, width) of the input images.
         """
         super().__init__()
         assert model_type in {'basic', 'advanced'}, "model_type must be either 'basic' or 'advanced'"
@@ -70,7 +70,6 @@ class SimpleEncoder(torch.nn.Module):
         else:
             raise ValueError("Unsupported model_type")
         
-        # Dynamically compute the flattened dimension.
         conv_trunk = torch.nn.Sequential(*layers)
         with torch.no_grad():
             dummy_input = torch.zeros(1, *input_shape)
@@ -93,8 +92,8 @@ class ViTEncoder(torch.nn.Module):
         Args:
             model_type (str): 'basic' or 'advanced'
             embedding_dim (int): Output embedding dimension.
-            input_shape (tuple): (channels, height, width)
-            patch_size (int): Patch size.
+            input_shape (tuple): (channels, height, width) of the input images.
+            patch_size (int): Size of each patch.
         """
         super().__init__()
         C, H, W = input_shape
@@ -117,36 +116,35 @@ class ViTEncoder(torch.nn.Module):
         torch.nn.init.trunc_normal_(self.pos_embed, std=0.02)
 
     def forward(self, x):
-        # x: (B, C, H, W)
-        x = self.proj(x)  # (B, d_model, H/patch_size, W/patch_size)
+        x = self.proj(x)
         B, d_model, H_p, W_p = x.shape
-        x = x.flatten(2).transpose(1, 2)  # (B, num_patches, d_model)
-        x = x + self.pos_embed  # Add positional embeddings.
-        x = self.transformer(x)  # (B, num_patches, d_model)
-        x = x.mean(dim=1)  # (B, d_model)
-        x = self.fc(x)    # (B, embedding_dim)
+        x = x.flatten(2).transpose(1, 2)
+        x = x + self.pos_embed
+        x = self.transformer(x)
+        x = x.mean(dim=1)
+        x = self.fc(x)
         return x
 
 # ─── Inference Transform ──────────────────────────────────────────────────────
 def get_inference_transform(data_source):
     """Returns a single-view transform for inference (normalization only)."""
+    import torchvision.transforms as T
     if data_source == 'MNIST':
         mean = (0.1307,)
         std = (0.3081,)
+        return T.Compose([T.ToTensor(), T.Normalize(mean, std)])
     elif data_source == 'CIFAR10':
         mean = (0.4914, 0.4822, 0.4465)
         std = (0.2023, 0.1994, 0.2010)
+        return T.Compose([T.ToTensor(), T.Normalize(mean, std)])
     elif data_source == 'FashionMNIST':
         mean = (0.2860,)
         std = (0.3530,)
+        return T.Compose([T.ToTensor(), T.Normalize(mean, std)])
     else:
         raise ValueError("Unsupported data source")
-    return T.Compose([
-        T.ToTensor(),
-        T.Normalize(mean, std)
-    ])
 
-# ─── Utility: Get validation indices from YAML ───────────────────────────────
+# ─── Utility: Get validation indices from YAML (not used here) ───────────────
 def get_validation_indices(yaml_path):
     with open(yaml_path, 'r') as f:
         subsample_cfg = yaml.safe_load(f)
@@ -156,7 +154,7 @@ def get_validation_indices(yaml_path):
     split = int(0.9 * len(all_indices))
     return all_indices[split:]
 
-# ─── Metadata extraction from checkpoint path ────────────────────────────────
+# ─── Metadata extraction from checkpoint path ───────────────────────────────
 def extract_metadata(ckpt_path, ckpt_root):
     """
     Assumes checkpoint path is of the form:
@@ -169,14 +167,13 @@ def extract_metadata(ckpt_path, ckpt_root):
     if len(parts) < 7:
         raise ValueError(f"Checkpoint path structure unexpected: {ckpt_path}")
     metadata = {
-        'model': parts[0],         # e.g., BYOL, SimSiam, SimCLR
-        'model_class': parts[1],     # e.g., vit, cnn
-        'data_source': parts[2],     # e.g., CIFAR10, MNIST, FashionMNIST
-        'skew': parts[3],          # e.g., heavily_skewed, moderately_skewed, uniform, extremely_skewed
-        'model_type': parts[4],      # e.g., advanced, basic
+        'model': parts[0],
+        'model_class': parts[1],
+        'data_source': parts[2],
+        'skew': parts[3],
+        'model_type': parts[4],
         'optim': parts[5],
     }
-    # Extract epoch from filename.
     filename = parts[-1]
     epoch = None
     if "epoch" in filename:
@@ -190,6 +187,7 @@ def extract_metadata(ckpt_path, ckpt_root):
 
 # ─── Main Inference Routine ───────────────────────────────────────────────────
 def main():
+    import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--ckpt_root', type=str, default=DEFAULT_CKPT_ROOT,
                         help="Root directory containing model checkpoints")
@@ -210,12 +208,9 @@ def main():
         print(f"No checkpoint files ending with 'epoch10.pth' found under {ckpt_root}")
         return
 
-    # Sort checkpoints to ensure deterministic partitioning.
     checkpoint_files.sort()
     total = len(checkpoint_files)
     
-    # Partition the checkpoint list into 4 parts.
-    # Compute indices for balanced partitioning.
     partition_size = total // 4
     remainder = total % 4
     start = partition_index * partition_size + min(partition_index, remainder)
@@ -224,7 +219,7 @@ def main():
     
     print(f"Found {total} checkpoint(s) with epoch10. Processing partition {partition_index} with {len(partition_files)} checkpoint(s).")
     
-    # Process each checkpoint in the partition with a progress bar.
+    # For each checkpoint, run inference on the official test set.
     for ckpt_path in tqdm(partition_files, desc="Processing checkpoints"):
         try:
             metadata = extract_metadata(ckpt_path, ckpt_root)
@@ -232,89 +227,77 @@ def main():
             print(f"Skipping {ckpt_path}: unable to extract metadata. Error: {e}")
             continue
 
-        # Build YAML file path.
-        # YAML filename: {data_source}_{skew}.yaml (e.g., CIFAR10_heavily_skewed.yaml)
-        yaml_name = f"{metadata['data_source']}_{metadata['skew']}.yaml"
-        yaml_path = os.path.join(DATA_ROOT, yaml_name)
-        if not os.path.exists(yaml_path):
-            print(f"YAML file not found: {yaml_path}. Skipping checkpoint {ckpt_path}.")
-            continue
-        try:
-            val_indices = get_validation_indices(yaml_path)
-        except Exception as e:
-            print(f"Error reading YAML file {yaml_path}: {e}. Skipping.")
-            continue
-
-        # Select the proper dataset class and set transform.
+        # Fixed: use the official test set for the data_source.
+        # For MNIST, FashionMNIST: load test set; for CIFAR10, also load CIFAR100.
+        dataset_list = []
         if metadata['data_source'] == 'MNIST':
-            dataset_cls = torchvision.datasets.MNIST
+            dataset_list = [("MNIST", torchvision.datasets.MNIST, get_inference_transform("MNIST"))]
         elif metadata['data_source'] == 'CIFAR10':
-            dataset_cls = torchvision.datasets.CIFAR10
+            dataset_list = [
+                ("CIFAR10", torchvision.datasets.CIFAR10, get_inference_transform("CIFAR10")),
+                ("CIFAR100", torchvision.datasets.CIFAR100, get_inference_transform("CIFAR10"))
+            ]
         elif metadata['data_source'] == 'FashionMNIST':
-            dataset_cls = torchvision.datasets.FashionMNIST
+            dataset_list = [("FashionMNIST", torchvision.datasets.FashionMNIST, get_inference_transform("FashionMNIST"))]
         else:
             print(f"Unsupported data source: {metadata['data_source']}. Skipping.")
             continue
 
-        transform = get_inference_transform(metadata['data_source'])
-        dataset_full = dataset_cls(root=DATA_ROOT, train=True, download=False, transform=transform)
-        val_subset = Subset(dataset_full, val_indices)
-        val_loader = DataLoader(val_subset, batch_size=256, shuffle=False, num_workers=4)
-        
-        # Determine input shape from a sample image.
-        sample_img, _ = dataset_full[0]
-        input_shape = tuple(sample_img.shape)
+        # For each dataset in dataset_list, run inference.
+        for ds_name, ds_cls, transform in dataset_list:
+            dataset = ds_cls(root=DATA_ROOT, train=False, download=True, transform=transform)
+            # If desired, you can sample a fixed subset (e.g. 10,000 datapoints).
+            # For now, we use the full official test set.
+            val_loader = DataLoader(dataset, batch_size=256, shuffle=False, num_workers=4)
+            
+            sample_img, _ = dataset[0]
+            input_shape = tuple(sample_img.shape)
 
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        # Instantiate the model based on model_class.
-        if metadata['model_class'] == 'cnn':
-            model = SimpleEncoder(model_type=metadata['model_type'], input_shape=input_shape).to(device)
-        elif metadata['model_class'] == 'vit':
-            model = ViTEncoder(model_type=metadata['model_type'], input_shape=input_shape, patch_size=4).to(device)
-        else:
-            print(f"Unsupported model_class: {metadata['model_class']}. Skipping.")
-            continue
+            device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+            if metadata['model_class'] == 'cnn':
+                model = SimpleEncoder(model_type=metadata['model_type'], input_shape=input_shape).to(device)
+            elif metadata['model_class'] == 'vit':
+                model = ViTEncoder(model_type=metadata['model_type'], input_shape=input_shape, patch_size=4).to(device)
+            else:
+                print(f"Unsupported model_class: {metadata['model_class']}. Skipping.")
+                continue
 
-        # Load checkpoint.
-        if not os.path.exists(ckpt_path):
-            print(f"Checkpoint not found: {ckpt_path}. Skipping.")
-            continue
-        try:
-            state = torch.load(ckpt_path, map_location=device)
-            model.load_state_dict(state)
-        except Exception as e:
-            print(f"Error loading checkpoint {ckpt_path}: {e}. Skipping.")
-            continue
-        model.eval()
+            if not os.path.exists(ckpt_path):
+                print(f"Checkpoint not found: {ckpt_path}. Skipping.")
+                continue
+            try:
+                state = torch.load(ckpt_path, map_location=device)
+                model.load_state_dict(state)
+            except Exception as e:
+                print(f"Error loading checkpoint {ckpt_path}: {e}. Skipping.")
+                continue
+            model.eval()
 
-        # Run inference to compute embeddings.
-        all_embeddings = []
-        all_labels = []
-        with torch.no_grad():
-            for images, labels in val_loader:
-                images = images.to(device)
-                embeddings = model(images)
-                all_embeddings.append(embeddings.cpu().numpy())
-                all_labels.append(labels.numpy())
-        try:
-            all_embeddings = np.concatenate(all_embeddings, axis=0)
-            all_labels = np.concatenate(all_labels, axis=0)
-        except Exception as e:
-            print(f"Error concatenating outputs for {ckpt_path}: {e}. Skipping.")
-            continue
+            all_embeddings = []
+            all_labels = []
+            with torch.no_grad():
+                for images, labels in val_loader:
+                    images = images.to(device)
+                    embeddings = model(images)
+                    all_embeddings.append(embeddings.cpu().numpy())
+                    all_labels.append(labels.numpy())
+            try:
+                all_embeddings = np.concatenate(all_embeddings, axis=0)
+                all_labels = np.concatenate(all_labels, axis=0)
+            except Exception as e:
+                print(f"Error concatenating outputs for {ckpt_path}: {e}. Skipping.")
+                continue
 
-        # Prepare output directory.
-        os.makedirs(EMBEDDING_OUTPUT_ROOT, exist_ok=True)
-        # Use a base filename derived from the checkpoint filename.
-        base = os.path.splitext(os.path.basename(ckpt_path))[0]
-        embed_filename = f"{base}_embeddings.npy"
-        labels_filename = f"{base}_labels.npy"
-        embed_path = os.path.join(EMBEDDING_OUTPUT_ROOT, embed_filename)
-        labels_path = os.path.join(EMBEDDING_OUTPUT_ROOT, labels_filename)
-        np.save(embed_path, all_embeddings)
-        np.save(labels_path, all_labels)
-        # Optionally, print a brief summary for this checkpoint.
-        tqdm.write(f"Processed {base}: {all_embeddings.shape[0]} embeddings saved.")
-        
+            os.makedirs(EMBEDDING_OUTPUT_ROOT, exist_ok=True)
+            base = os.path.splitext(os.path.basename(ckpt_path))[0]
+            # Preserve the original filename structure.
+            embed_filename = f"{base}_{ds_name}_embeddings.npy"
+            labels_filename = f"{base}_{ds_name}_labels.npy"
+            embed_path = os.path.join(EMBEDDING_OUTPUT_ROOT, embed_filename)
+            labels_path = os.path.join(EMBEDDING_OUTPUT_ROOT, labels_filename)
+            np.save(embed_path, all_embeddings)
+            np.save(labels_path, all_labels)
+            tqdm.write(f"Processed {base} on {ds_name}: {all_embeddings.shape[0]} embeddings saved.")
+
 if __name__ == '__main__':
     main()
